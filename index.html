@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leitor de Placas com OCR</title>
+  <style>
+    /* Reset básico */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f0f0;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 2em;
+      text-align: center;
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      text-align: center;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    #video {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1.1em;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    canvas, img {
+      display: none;
+    }
+
+    #preview {
+      width: 100%;
+      margin-top: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #resultado {
+      margin-top: 20px;
+      font-size: 1.2em;
+      line-height: 1.5;
+      color: #333;
+    }
+
+    .resultado-texto {
+      font-weight: bold;
+      color: #4CAF50;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Leitor de Placas da Uina</h1>
+
+    <!-- Webcam -->
+    <video id="video" autoplay></video><br>
+
+    <!-- Botão para tirar foto -->
+    <button onclick="tirarFoto()">Tirar Foto</button>
+
+    <!-- Imagem capturada -->
+    <canvas id="canvas" style="display:none;"></canvas>
+    <img id="preview" src="">
+
+    <!-- Resultado -->
+    <div id="resultado">Textos detectados: </div>
+  </div>
+
+  <script>
+    // Acessando a webcam
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const preview = document.getElementById('preview');
+    const resultado = document.getElementById('resultado');
+
+    // Ativa a webcam no navegador
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream)
+      .catch(err => alert("Erro ao acessar webcam: " + err));
+
+    // Função para tirar a foto e realizar o OCR
+    function tirarFoto() {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Converte a imagem para base64
+      const dataURL = canvas.toDataURL('image/jpeg');
+      preview.src = dataURL;
+
+      // Chama o Tesseract para realizar o OCR
+      Tesseract.recognize(
+        dataURL, 
+        'eng', // Define o idioma (inglês neste caso)
+        {
+          logger: (m) => console.log(m), // Opcional: Para exibir logs no console
+        }
+      ).then(({ data: { text } }) => {
+        // Exibe os textos detectados na página
+        resultado.innerHTML = "<strong>Textos detectados:</strong><br>" + text.replace(/\n/g, '<br>');
+      }).catch(error => {
+        console.error("Erro ao processar a imagem:", error);
+        resultado.innerHTML = "Erro ao processar a imagem.";
+      });
+    }
+  </script>
+
+</body>
+</html>
